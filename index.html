@@ -3,23 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Subway White Shirt</title>
+    <title>Subway Final Fixed</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Arial Black', sans-serif; touch-action: none; user-select: none; }
 
         /* PANTALLAS */
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; text-align: center; color: white; }
         
-        #loader { background: linear-gradient(#1c92d2, #f2fcfe); z-index: 100; }
-        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid #005c97; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 20px; }
+        #loader { background: linear-gradient(#2980b9, #6dd5fa, #ffffff); z-index: 100; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.5); border-top: 5px solid #0047AB; border-radius: 50%; animation: spin 1s infinite linear; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* HUD */
+        /* HUD MEJORADO (FONDO BLANCO - LETRAS AZULES) */
         #hud { position: absolute; top: 20px; left: 0; width: 100%; display: none; justify-content: space-between; padding: 0 20px; box-sizing: border-box; pointer-events: none; z-index: 10; }
-        .hud-item { background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 15px; padding: 5px 15px; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        .hud-item { 
+            background: #ffffff; 
+            color: #0047AB; 
+            border: 3px solid #0047AB;
+            border-radius: 15px; 
+            padding: 8px 20px; 
+            font-size: 22px; 
+            display: flex; align-items: center; gap: 10px; 
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
         
         /* BARRA PODER */
-        #power-bar { position: absolute; left: 20px; top: 70px; width: 200px; height: 15px; background: #333; border: 2px solid white; display: none; border-radius: 10px; }
+        #power-bar { position: absolute; left: 20px; top: 80px; width: 200px; height: 15px; background: #333; border: 2px solid white; display: none; border-radius: 10px; }
         #power-fill { width: 100%; height: 100%; background: #ff4500; transition: width 0.1s linear; }
 
         /* MENÚS */
@@ -34,7 +44,7 @@
 
     <!-- CARGA -->
     <div id="loader" class="screen">
-        <h1 style="color:#005c97;">CARGANDO...</h1>
+        <h1 style="color:#0047AB;">CARGANDO...</h1>
         <div class="spinner"></div>
     </div>
 
@@ -47,7 +57,7 @@
 
     <!-- MENÚS -->
     <div id="menu-start" class="screen">
-        <h1 style="color:#ffcc00; font-size:50px;">SUBWAY<br>RUNNER</h1>
+        <h1 style="color:#ffcc00; font-size:50px; -webkit-text-stroke: 2px #0047AB;">SUBWAY<br>RUNNER</h1>
         <button class="btn-green" onclick="startGame()">▶ JUGAR</button>
     </div>
 
@@ -80,10 +90,10 @@
         let lanes = [-3, 0, 3];
         let currentLane = 1;
         
-        // --- VELOCIDAD ---
-        const BASE_SPEED = 20;
-        const MAX_SPEED = 50;
-        let speed = BASE_SPEED;
+        // --- CONTROL DE VELOCIDAD ---
+        const START_SPEED = 18; // Velocidad inicial cómoda
+        const MAX_SPEED = 45;   // Velocidad máxima
+        let speed = START_SPEED;
         
         let score = 0, coins = 0, lives = 1;
 
@@ -145,8 +155,7 @@
             const w1 = new THREE.Mesh(new THREE.BoxGeometry(10, 40, 800), wMat); w1.position.set(-20, 20, -300); scene.add(w1);
             const w2 = new THREE.Mesh(new THREE.BoxGeometry(10, 40, 800), wMat); w2.position.set(20, 20, -300); scene.add(w2);
 
-            // --- AQUÍ CAMBIAMOS EL COLOR DEL PERSONAJE ---
-            // Camisa Blanca (0xffffff) y Jean Azul (0x1565C0)
+            // Personaje (Camisa Blanca 0xFFFFFF, Jean Azul 0x1565C0)
             player = createCharacter(0xffffff, 0x1565C0); 
             scene.add(player);
             
@@ -155,7 +164,7 @@
 
         function createCharacter(topColor, botColor) {
             const g = new THREE.Group();
-            // Cuerpo (Camisa)
+            // Cuerpo
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.9,0.5), new THREE.MeshLambertMaterial({color:topColor}));
             body.position.y=1.2; body.castShadow=true; g.add(body);
             
@@ -216,17 +225,19 @@
         }
 
         function resetLogic() {
+            // Reinicio completo
             [obstacles, items, particles, scenery].forEach(arr => {
                 arr.forEach(o => scene.remove(o));
                 arr.length = 0;
             });
             player.position.set(0,0,0); player.jetpack.visible=false; player.rotation.set(0,0,0);
             
-            // --- REINICIAR VELOCIDAD ---
-            speed = BASE_SPEED; 
+            // --- FIX DE VELOCIDAD AQUÍ ---
+            speed = START_SPEED; // Forzamos velocidad inicial
             
             score=0; coins=0; lives=1; activePower=null;
             paused=false; policia.visible=false; policeChaseTimer=0;
+            currentLane=1; jumping=false; velY=0;
         }
 
         function spawnEntities() {
@@ -309,7 +320,7 @@
             player.position.x += (lanes[currentLane]-player.position.x)*0.2;
 
             if(activePower === 'jetpack') {
-                // VUELO AJUSTADO (MÁS BAJO)
+                // VUELO AJUSTADO (Justo encima trenes)
                 player.position.y += (7.0 - player.position.y)*0.1; 
                 player.rotation.x = 0.8;
                 player.parts.ll.rotation.x = 0.2; player.parts.rl.rotation.x = 0.2;
@@ -352,8 +363,8 @@
                 if(particles[i].scale.x < 0.05) { scene.remove(particles[i]); particles.splice(i,1); }
             }
 
-            // --- AUMENTO GRADUAL DE VELOCIDAD ---
-            if(speed < MAX_SPEED) speed += 0.01; 
+            // --- AUMENTO GRADUAL Y SUAVE DE VELOCIDAD ---
+            if(speed < MAX_SPEED) speed += 0.005; // Acelera muy lento
             
             score++; document.getElementById('score').innerText=Math.floor(score/10);
             renderer.render(scene, camera);
@@ -383,8 +394,8 @@
             player.position.y=12; velY=0; 
             obstacles.forEach(o => { if(o.position.z > -60) o.position.y = -500; });
             
-            // BAJAR VELOCIDAD UN POCO AL REVIVIR (NO AL MÍNIMO, PERO SÍ ALGO)
-            speed = Math.max(BASE_SPEED, speed * 0.8);
+            // REDUCIR UN POCO LA VELOCIDAD PARA QUE NO SEA INJUSTO AL REVIVIR
+            speed = Math.max(START_SPEED, speed * 0.85);
 
             policeChaseTimer = 300; 
             paused=false;
